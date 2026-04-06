@@ -1,0 +1,317 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>FinFlow | Master Your Money</title>
+<!-- TODO: Replace with actual favicon -->
+<link href="/favicon.ico" rel="icon">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Manrope:wght@400;500;600&amp;family=Space_Grotesk:wght@400;500;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "error-dim": "#d7383b",
+                "secondary-fixed": "#e5c6ff",
+                "on-secondary-fixed-variant": "#7511c3",
+                "on-surface-variant": "#aaabac",
+                "on-background": "#f6f6f7",
+                "secondary": "#c180ff",
+                "on-tertiary": "#5e5f60",
+                "surface-dim": "#0c0e0f",
+                "surface-container-lowest": "#000000",
+                "on-surface": "#f6f6f7",
+                "on-error": "#490006",
+                "surface-container": "#171a1b",
+                "outline": "#747577",
+                "on-tertiary-fixed": "#4d4f50",
+                "inverse-primary": "#006e37",
+                "background": "#0c0e0f",
+                "on-secondary-fixed": "#4f0089",
+                "surface-container-highest": "#232628",
+                "on-tertiary-fixed-variant": "#6a6b6d",
+                "surface-tint": "#a4ffb9",
+                "on-primary-fixed-variant": "#006632",
+                "on-secondary-container": "#e9cdff",
+                "secondary-container": "#6f00be",
+                "on-primary-container": "#005b2c",
+                "primary-container": "#00fd87",
+                "tertiary-fixed-dim": "#eeeeef",
+                "surface-container-high": "#1d2021",
+                "tertiary-dim": "#ebebec",
+                "tertiary-fixed": "#fcfcfd",
+                "on-error-container": "#ffa8a3",
+                "error": "#ff716c",
+                "surface-bright": "#292d2e",
+                "error-container": "#9f0519",
+                "surface-variant": "#232628",
+                "on-primary": "#006532",
+                "primary-fixed-dim": "#00ed7e",
+                "tertiary": "#f9f9fa",
+                "primary-fixed": "#00fd87",
+                "on-secondary": "#33005b",
+                "on-primary-fixed": "#004621",
+                "surface-container-low": "#111415",
+                "outline-variant": "#464849",
+                "primary": "#a4ffb9",
+                "secondary-dim": "#9c48ea",
+                "inverse-surface": "#f9f9fa",
+                "surface": "#0c0e0f",
+                "primary-dim": "#00ed7e",
+                "secondary-fixed-dim": "#dbb4ff",
+                "tertiary-container": "#ebebec",
+                "on-tertiary-container": "#555758",
+                "inverse-on-surface": "#545556"
+              },
+              fontFamily: {
+                "headline": ["Plus Jakarta Sans"],
+                "body": ["Manrope"],
+                "label": ["Space Grotesk"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .neon-border {
+            box-shadow: 0 0 15px rgba(164, 255, 185, 0.1), inset 0 0 1px rgba(164, 255, 185, 0.2);
+        }
+        .glass-card {
+            background: rgba(35, 38, 40, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .text-gradient-primary {
+            background: linear-gradient(135deg, #a4ffb9 0%, #00fd87 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .logo-gradient {
+            background: linear-gradient(135deg, #00FF88 0%, #FFFFFF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary/30 selection:text-primary">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#0c0e0f]/80 backdrop-blur-xl dark:bg-[#0c0e0f]/80 shadow-[0_8px_32px_0_rgba(193,128,255,0.08)]">
+<div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+<div class="text-[26px] font-black tracking-tighter font-headline logo-gradient" style="">FinFlow</div>
+<div class="flex items-center gap-4">
+<button class="bg-primary-container text-on-primary-container font-headline font-bold px-6 py-2.5 rounded-full scale-95 active:scale-90 transition-all duration-300 hover:bg-[#a4ffb9]/10 hover:text-[#00fd87] border border-transparent hover:border-primary/20 shadow-[0_0_15px_rgba(0,253,135,0.2)]" style="">Sign Up</button>
+</div>
+</div>
+</nav>
+<main class="pt-32 pb-24">
+<!-- Hero Section -->
+<section class="max-w-7xl mx-auto px-6 mb-32 relative text-center">
+<div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-secondary/10 blur-[120px] rounded-full -z-10"></div>
+<div class="mb-16">
+<span class="font-label text-primary tracking-widest uppercase text-sm mb-4 block" style="">BUILT FOR TEENS · FREE · NO BANK NEEDED</span>
+<h1 class="font-headline font-extrabold text-5xl md:text-7xl lg:text-8xl tracking-tighter mb-6 leading-[1.1]" style="">
+                Master Your Money.<br>
+<span class="text-gradient-primary" style="">Own Your Future.</span>
+</h1>
+<p class="text-on-surface-variant text-lg md:text-xl max-w-2xl mx-auto font-body mb-6" style="">The money app built for teens, by a teen.</p>
+<div class="text-on-background text-lg font-medium mb-10" style="">Your Money, Your Rules.</div>
+<div class="max-w-md mx-auto">
+<button class="w-full px-8 py-4 rounded-full bg-primary-container text-on-primary-container font-bold text-lg hover:shadow-[0_0_20px_rgba(0,253,135,0.4)] transition-all" style="">
+                    Sign Up
+                </button>
+<p class="mt-4 text-on-surface-variant text-sm font-normal" style="">Join 500+ teens already tracking their money — free forever.</p>
+</div>
+</div>
+<!-- Hero Mockups -->
+<div class="relative grid grid-cols-12 gap-6 items-center">
+<div class="col-span-12 md:col-span-8 group relative">
+<div class="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+<img alt="Futuristic financial dashboard UI mockup" class="relative rounded-xl border border-white/5 shadow-2xl w-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVsMUIBbHcQY-rgu2M_5jg9B6CxRA-5aUJNVtW7eKiY6NIBHsESFIzP_3PYCCeMbTY77D5pd7vkNCyrQlldUkwPiaSBgwkd6CN0nD-8prqnuzOp2bwgsLXiMzM0L3LtsLyfKVRiIiSTcv_BjJP9jr-AYpRSF_SeGXrG_ilAlaPXQyg8AFBKzof5GTwlBH5On7HbTqmqdA8ynCTAOBBS-Ozl6ODyE3rYiVoEe3x34GFvFZPwp9Cem2uuoHSBMVH_z7TgyWC7EptxKjo" style="">
+</div>
+<div class="hidden md:block col-span-4 translate-y-12">
+<img alt="Mobile app UI showing crypto portfolio balances" class="rounded-xl border border-white/5 shadow-2xl w-full neon-border" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpKCgctnAha77k8L2qweY1KxvTkKy-l9WzN2zKNliknS1i8V6OXcIQsLUc5lL291i6fziraU5fU49M4A7crDIe7WOCbq3rRFYFnLe9HgnqaFJrC06LHXdNGM_2KTRUGqdcJ64QY8w3X7R2Ra_cD5ZzPKTjX55VJhCOAQZ95b-GSC7xEFqDO3lAYRHPPq2ESWqrG3ZV8sk7tBOd2M93pRRvFT6u83BzYsLZz3-QJfulROw3LfmwbGP1I6BiOQqHX9kTVBA5aSiHGWub" style="">
+</div>
+</div>
+</section>
+<!-- How It Works Section -->
+<section class="max-w-7xl mx-auto px-6 mb-32">
+<div class="mb-12">
+<h2 class="font-headline font-bold text-4xl mb-4" style="">Up and running in 2 minutes.</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="glass-card rounded-xl p-8 hover:bg-surface-container-high transition-colors">
+<div class="text-4xl mb-6" style="">🙋</div>
+<h3 class="font-headline font-bold text-xl mb-3" style="">Step 1</h3>
+<p class="text-on-surface-variant text-sm" style="">Create your free account. No bank details needed.</p>
+</div>
+<div class="glass-card rounded-xl p-8 hover:bg-surface-container-high transition-colors">
+<div class="text-4xl mb-6" style="">💰</div>
+<h3 class="font-headline font-bold text-xl mb-3" style="">Step 2</h3>
+<p class="text-on-surface-variant text-sm" style="">Log your income and spending in seconds.</p>
+</div>
+<div class="glass-card rounded-xl p-8 hover:bg-surface-container-high transition-colors">
+<div class="text-4xl mb-6" style="">📈</div>
+<h3 class="font-headline font-bold text-xl mb-3" style="">Step 3</h3>
+<p class="text-on-surface-variant text-sm" style="">Watch your Money Score grow as you build better habits.</p>
+</div>
+</div>
+</section>
+<!-- Bento Grid Section -->
+<section class="max-w-7xl mx-auto px-6 mb-32">
+<div class="mb-12">
+<h2 class="font-headline font-bold text-4xl mb-4" style="">Command Your Assets</h2>
+<p class="text-on-surface-variant font-body" style="">Everything you need to track your money in one place.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
+<!-- Expense Tracker -->
+<div class="md:col-span-2 lg:col-span-3 glass-card rounded-xl p-8 flex flex-col justify-between group hover:bg-surface-container-high transition-colors">
+<div>
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary" style="">account_balance_wallet</span>
+</div>
+<h3 class="font-headline font-bold text-2xl mb-2" style="">Expense Tracking</h3>
+<p class="text-on-surface-variant text-sm" style="">Log what you earn — jobs, reselling, TikTok, gifts — in seconds.</p>
+</div>
+<div class="mt-8 pt-8 border-t border-white/5">
+<div class="flex items-end gap-2 mb-2">
+<span class="text-4xl font-headline font-black" style="">$1,240</span>
+<span class="text-primary font-label text-sm mb-1.5" style="">+12%</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary to-primary-container" style="width: 65%"></div>
+</div>
+</div>
+</div>
+<!-- Savings Goals -->
+<div class="md:col-span-2 lg:col-span-3 glass-card rounded-xl p-8 group hover:bg-surface-container-high transition-colors relative overflow-hidden">
+<div class="relative z-10">
+<div class="w-12 h-12 rounded-lg bg-secondary/10 flex items-center justify-center mb-6 text-2xl" style="">
+                        🎯
+                    </div>
+<h3 class="font-headline font-bold text-2xl mb-2" style="">Savings Goals</h3>
+<p class="text-on-surface-variant text-sm" style="">Set savings goals and watch your progress grow visually.</p>
+</div>
+<div class="absolute bottom-0 right-0 w-1/2 opacity-20">
+<img alt="Abstract 3D digital wireframe" class="object-cover h-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqgUEuh2ocMD3Xhw4wfNzVjol2VsbAUfuF-luCu1ZydkaAZ55FTtA-MZFckZyqG9o76iBNksH0OBq_owKofPhQzTrS3i6UOLuADqkaG_am6xMzDjaYtQs4v26t9n3Fr-Fdv7PF4iI0wO_LHvheDPbwikLKmnDliOF3xtLkEHfqZK9uPEfXOSRGAGkpU37knTAfLcvVc-FPKJs6jYHAqTpchp9zaIndVe1OGlCUHA7TYGRlhclyhPkkG-KpgWYsWYGPxQOtIyi4LA6Z" style="">
+</div>
+</div>
+<!-- Saved This Month -->
+<div class="md:col-span-2 lg:col-span-2 glass-card rounded-xl p-6 flex flex-col justify-center items-center text-center">
+<div class="w-16 h-16 rounded-full bg-primary-container/20 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-primary text-3xl" data-weight="fill" style="">trending_up</span>
+</div>
+<span class="font-label text-xs uppercase tracking-widest text-on-surface-variant" style="">SAVED THIS MONTH</span>
+<span class="font-headline font-black text-3xl mt-1 text-primary" style="">$340.00</span>
+</div>
+<!-- Goals -->
+<div class="md:col-span-2 lg:col-span-2 glass-card rounded-xl p-6 border-l-4 border-secondary/40">
+<h4 class="font-headline font-bold mb-4 flex items-center gap-2" style="">
+<span class="material-symbols-outlined text-secondary text-xl" style="">flag</span>
+                    Growth Goals
+                </h4>
+<ul class="space-y-4">
+<li class="flex justify-between items-center" style="">
+<span class="text-sm font-body" style="">Emergency Fund</span>
+<span class="font-label text-xs text-secondary" style="">88%</span>
+</li>
+<li class="flex justify-between items-center opacity-60" style="">
+<span class="text-sm font-body" style="">Retirement Alpha</span>
+<span class="font-label text-xs text-secondary" style="">24%</span>
+</li>
+</ul>
+</div>
+<!-- Compound Calc -->
+<div class="md:col-span-4 lg:col-span-2 glass-card rounded-xl p-6 bg-gradient-to-br from-surface-container to-surface-container-high">
+<h4 class="font-headline font-bold mb-2" style="">Interest Engine</h4>
+<p class="text-xs text-on-surface-variant mb-4" style="">Calculate your exponential future.</p>
+<div class="space-y-3">
+<div class="h-10 bg-surface-container-lowest rounded border border-outline-variant/20 flex items-center px-3">
+<span class="text-xs font-label opacity-50" style="">$</span>
+<span class="ml-2 font-body text-sm" style="">10,000</span>
+</div>
+<button class="w-full py-2 bg-secondary text-on-secondary-fixed font-bold rounded-lg text-sm" style="">Calculate</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Learning Section (Knowledge Terminal) - SCALED UP -->
+<section class="max-w-7xl mx-auto px-6 mb-32">
+<div class="bg-surface-container-low rounded-[2rem] overflow-hidden relative min-h-[800px] lg:min-h-[900px] flex items-stretch">
+<div class="grid grid-cols-1 lg:grid-cols-2 w-full">
+<div class="p-12 lg:p-24 flex flex-col justify-center relative z-10">
+<span class="font-label text-secondary tracking-[0.3em] uppercase text-sm mb-6 block" style="">Knowledge Terminal</span>
+<h2 class="font-headline font-extrabold text-5xl md:text-7xl lg:text-8xl mb-10 tracking-tighter leading-[1.05]" style="">Learn money skills in 5 minutes.</h2>
+<p class="text-on-surface-variant text-xl md:text-2xl mb-16 leading-relaxed max-w-xl" style="">
+                        Short, plain-English lessons on budgeting, saving, tax basics, and investing — written for teens, not bankers.
+                    </p>
+<div class="grid grid-cols-1 gap-y-10">
+<div class="flex items-center gap-6 group cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 scale-110">
+<span class="material-symbols-outlined text-primary text-3xl" style="">play_circle</span>
+</div>
+<span class="font-headline font-bold text-xl md:text-2xl group-hover:text-primary transition-colors" style="">The Magic of Compound Interest</span>
+</div>
+<div class="flex items-center gap-6 group cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 scale-110">
+<span class="material-symbols-outlined text-primary text-3xl" style="">play_circle</span>
+</div>
+<span class="font-headline font-bold text-xl md:text-2xl group-hover:text-primary transition-colors" style="">The 50/30/20 Budgeting Rule</span>
+</div>
+<div class="flex items-center gap-6 group cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 scale-110">
+<span class="material-symbols-outlined text-primary text-3xl" style="">play_circle</span>
+</div>
+<span class="font-headline font-bold text-xl md:text-2xl group-hover:text-primary transition-colors" style="">Taxes and First Jobs</span>
+</div>
+<div class="flex items-center gap-6 group cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 scale-110">
+<span class="material-symbols-outlined text-primary text-3xl" style="">play_circle</span>
+</div>
+<span class="font-headline font-bold text-xl md:text-2xl group-hover:text-primary transition-colors" style="">Setting S.M.A.R.T Goals</span>
+</div>
+<div class="flex items-center gap-6 group cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 scale-110">
+<span class="material-symbols-outlined text-primary text-3xl" style="">play_circle</span>
+</div>
+<span class="font-headline font-bold text-xl md:text-2xl group-hover:text-primary transition-colors" style="">Credit Cards vs. Debit Cards</span>
+</div>
+<div class="flex items-center gap-6 group cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-surface-container-highest flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 scale-110">
+<span class="material-symbols-outlined text-primary text-3xl" style="">play_circle</span>
+</div>
+<span class="font-headline font-bold text-xl md:text-2xl group-hover:text-primary transition-colors" style="">Emergency Funds</span>
+</div>
+</div>
+</div>
+<div class="relative min-h-[400px] lg:min-h-full overflow-hidden">
+<img alt="Futuristic server room" class="absolute inset-0 w-full h-full object-cover scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmFhAjhgstSJ0h206gY59X3T1miajs1eYlL9KoF_B5gQnW3T7iFaeDaGmDVQsCkPEA9i6GydowWmq6KujiSgIFCF1DHjsMb4iKCa0gcuCwgsHU-xz-pOQ1h9neJR57ay6c3X4AFzQtd1TKZXqg_IQ6WfnZ6MK4nmKwTybXg0zJyFw4DY7petm65R81HN9Bm0QkR-nLQFULFmRExR4B3riCEdPv0znFTVNrSANH2RK-FaIUAL6oMHgWrVfPdo0uAzPaWDgDDUEIUV-8" style="">
+<div class="absolute inset-0 bg-gradient-to-r from-surface-container-low via-surface-container-low/60 to-transparent"></div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#0c0e0f] dark:bg-[#0c0e0f] w-full py-16 border-t border-white/5">
+<div class="max-w-7xl mx-auto px-6 flex flex-col items-center">
+<div class="text-3xl font-black tracking-tighter font-headline logo-gradient mb-8" style="">FinFlow</div>
+<p class="text-on-surface-variant text-sm text-center max-w-md mb-8" style="">
+            The money app built for teens, by a teen. Your money. Your rules.
+        </p>
+<div class="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-8">
+<a class="text-sm font-label text-on-surface-variant hover:text-primary transition-colors duration-300 uppercase tracking-wider" href="#" style="">Privacy Policy</a>
+<a class="text-sm font-label text-on-surface-variant hover:text-primary transition-colors duration-300 uppercase tracking-wider" href="#" style="">Terms of Service</a>
+<a class="text-sm font-label text-on-surface-variant hover:text-primary transition-colors duration-300 uppercase tracking-wider" href="#" style="">Security</a>
+<a class="text-sm font-label text-on-surface-variant hover:text-primary transition-colors duration-300 uppercase tracking-wider" href="#" style="">Help Center</a>
+</div>
+<div class="text-on-tertiary-fixed-variant text-xs font-label" style="">
+            © 2026 FinFlow. All rights reserved.
+        </div>
+</div>
+</footer>
+</body></html>

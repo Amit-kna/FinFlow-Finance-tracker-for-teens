@@ -1,0 +1,1007 @@
+You are an expert full-stack Next.js developer working on FinFlow,
+a teen finance app built with Next.js 14, Supabase, TypeScript,
+and Tailwind CSS. I need you to implement a complete Pro subscription
+system and build every Pro feature from scratch. This is a large
+implementation — do not skip any section. Complete every feature fully.
+
+---
+
+## PART 1: PRO SUBSCRIPTION SYSTEM
+
+### 1.1 Database Schema — Add These Tables
+
+Run this SQL in Supabase:
+
+-- Pro subscriptions table
+create table subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade unique,
+  status text check (status in ('active', 'cancelled', 'expired')),
+  plan text default 'pro',
+  price numeric default 2.99,
+  started_at timestamptz default now(),
+  expires_at timestamptz,
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  created_at timestamptz default now()
+);
+
+-- Friend connections table
+create table friendships (
+  id uuid primary key default gen_random_uuid(),
+  requester_id uuid references users(id) on delete cascade,
+  receiver_id uuid references users(id) on delete cascade,
+  status text check (status in ('pending', 'accepted', 'declined')),
+  created_at timestamptz default now(),
+  unique(requester_id, receiver_id)
+);
+
+-- Friend goals table
+create table friend_goals (
+  id uuid primary key default gen_random_uuid(),
+  goal_id uuid references goals(id) on delete cascade,
+  friend_id uuid references users(id) on delete cascade,
+  friend_goal_id uuid references goals(id) on delete cascade,
+  created_at timestamptz default now()
+);
+
+-- Streak freezes table
+create table streak_freezes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  used_at date,
+  month_year text, -- format: '2025-06'
+  created_at timestamptz default now()
+);
+
+-- Points log table (cheat-proof — server side only)
+create table points_log (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  action text not null,
+  points integer not null,
+  logged_at timestamptz default now(),
+  metadata jsonb
+);
+
+-- Leaderboard view
+create or replace view leaderboard as
+select
+  u.id,
+  u.name,
+  u.money_score,
+  u.streak,
+  count(distinct lp.id) filter (where lp.completed = true)
+    as lessons_completed,
+  count(distinct g.id) filter (where g.completed = true)
+    as goals_completed,
+  row_number() over (order by u.money_score desc) as rank
+from users u
+left join lesson_progress lp on lp.user_id = u.id
+left join goals g on g.user_id = u.id
+group by u.id, u.name, u.money_score, u.streak;
+
+-- Add Pro fields to existing users table
+alter table users add column if not exists is_pro boolean default false;
+alter table users add column if not exists streak_freeze_count
+  integer default 0;
+alter table users add column if not exists total_xp integer default 0;
+
+### 1.2 Pro Gate Hook
+
+Create /lib/hooks/useProStatus.ts:
+
+'use client'
+import { useEffect, useState } from 'react'
+import { createClientComponentClient }
+  from '@supabase/auth-helpers-nextjs'
+
+export function useProStatus() {
+  const supabase = createClientComponentClient()
+  const [isPro, setIsPro] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const check = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { setLoading(false); return }
+
+      const { data } = await supabase
+        .from('subscriptions')
+        .select('status, expires_at')
+        .eq('user_id', session.user.id)
+        .eq('status', 'active')
+        .single()
+
+      if (data) {
+        const notExpired = !data.expires_at ||
+          new Date(data.expires_at) > new Date()
+        setIsPro(notExpired)
+      }
+      setLoading(false)
+    }
+    check()
+  }, [])
+
+  return { isPro, loading }
+}
+
+### 1.3 Pro Gate Component
+
+Create /components/ProGate.tsx:
+
+'use client'
+import { useProStatus } from '@/lib/hooks/useProStatus'
+import { useRouter } from 'next/navigation'
+
+interface ProGateProps {
+  children: React.ReactNode
+  fallback?: React.ReactNode
+}
+
+export default function ProGate({ children, fallback }: ProGateProps) {
+  const { isPro, loading } = useProStatus()
+  const router = useRouter()
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-40">
+      <div className="w-6 h-6 border-2 border-[#00C896]
+        border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+
+  if (!isPro) {
+    return fallback || (
+      <div className="flex flex-col items-center justify-center
+        min-h-[60vh] p-8 text-center">
+        <div className="text-5xl mb-4">🔒</div>
+        <h2 className="text-2xl font-bold text-white mb-2">
+          Pro Feature
+        </h2>
+        <p className="text-gray-400 mb-6 max-w-sm">
+          Upgrade to FinFlow Pro for $2.99/month to unlock
+          this feature and everything else Pro has to offer.
+        </p>
+        <button
+          onClick={() => router.push('/upgrade')}
+          className="bg-[#00C896] text-black font-bold
+            px-8 py-3 rounded-xl hover:bg-[#00b085]
+            transition-colors"
+        >
+          Upgrade to Pro
+        </button>
+        <p className="text-gray-500 text-sm mt-3">
+          Cancel anytime. No hidden fees.
+        </p>
+      </div>
+    )
+  }
+
+  return <>{children}</>
+}
+
+### 1.4 Upgrade Page
+
+Create /app/upgrade/page.tsx — a full upgrade page showing:
+
+- Header: "FinFlow Pro" with a crown emoji
+- Price: "$2.99/month — cancel anytime"
+- Two columns: Free vs Pro feature comparison table
+- Big green "Upgrade Now" button
+- Below button: "Secure payment via Stripe"
+
+Free column shows: 6 lessons, basic dashboard, 1 savings goal,
+top 10 leaderboard only, no streaks, no analytics
+
+Pro column shows every feature listed in this prompt with
+green checkmarks
+
+For payment: create a placeholder Stripe checkout button.
+Add this comment where Stripe goes:
+// TODO: Replace with real Stripe checkout session
+// Use: stripe.checkout.sessions.create({ ... })
+// Add STRIPE_SECRET_KEY to .env
+
+Style: dark background matching app, green accents,
+mobile-first, premium feel
+
+---
+
+## PART 2: LESSONS SYSTEM (ALL 43 LESSONS)
+
+### 2.1 Lessons Data File
+
+Create /lib/lessons.ts with ALL 43 lessons from the
+curriculum file provided. Structure each lesson exactly
+as follows:
+
+export interface Lesson {
+  id: number
+  title: string
+  track: string
+  isPro: boolean
+  xp: number
+  badge: string
+  badgeEmoji: string
+  content: string    // full lesson text
+  quiz: {
+    question: string
+    options: string[]
+    correctIndex: number  // 0-3
+  }[]
+}
+
+export const lessons: Lesson[] = [
+  // LESSON 1
+  {
+    id: 1,
+    title: "What is Money and How Does It Work?",
+    track: "Money Basics",
+    isPro: false,
+    xp: 10,
+    badge: "Money Newbie",
+    badgeEmoji: "💰",
+    content: `[Full lesson text here — copy from curriculum file]`,
+    quiz: [
+      {
+        question: "What did people do before money was invented?",
+        options: [
+          "They used gold coins",
+          "They borrowed from banks",
+          "They bartered goods and services",
+          "They worked for free"
+        ],
+        correctIndex: 2
+      },
+      // ... remaining 2 questions
+    ]
+  },
+  // ... all 43 lessons following same structure
+]
+
+// Helper functions
+export const getFreeLessons = () =>
+  lessons.filter(l => !l.isPro)
+
+export const getProLessons = () =>
+  lessons.filter(l => l.isPro)
+
+export const getLessonsByTrack = (track: string) =>
+  lessons.filter(l => l.track === track)
+
+export const tracks = [
+  { name: "Money Basics", emoji: "💰", isPro: false },
+  { name: "Budgeting & Spending", emoji: "📊", isPro: false },
+  { name: "Saving", emoji: "🏦", isPro: false },
+  { name: "Investing", emoji: "📈", isPro: false },
+  { name: "Earning More", emoji: "💼", isPro: false },
+  { name: "Trading Academy", emoji: "🏛️", isPro: true },
+]
+
+THE FREE LESSONS ARE: lessons 1-6 only (IDs 1-6).
+isPro: false for lessons 1-6.
+isPro: true for ALL other lessons (7-43).
+
+Include every single lesson from the curriculum file.
+Do not summarise or shorten lesson content.
+Write the full text of each lesson into the content field.
+
+### 2.2 Learn Page Updates
+
+Update /app/learn/page.tsx to:
+
+1. Show track sections with track name and emoji as headers
+2. Show free lessons normally with a green unlock icon
+3. Show Pro lessons with a 🔒 lock overlay and
+   "Pro" badge in top right corner of card
+4. When a locked lesson is tapped → show upgrade modal
+   (don't navigate away — show an inline modal)
+5. Show XP available on each card
+6. Show completion status (completed/not started/in progress)
+7. Show track completion progress:
+   "Money Basics: 3/8 complete"
+
+### 2.3 Lesson Page Updates
+
+Update /app/learn/[id]/page.tsx:
+
+1. At the top of the page, check if isPro is true
+   AND user is not Pro → redirect to /upgrade
+2. Award correct XP on completion:
+   - Free lesson: +10 XP
+   - Pro lesson: +20 XP
+3. Update points_log table on completion
+4. Update users.total_xp and users.money_score
+5. Show badge award animation when lesson is completed
+6. Block re-earning XP if already completed
+   (check lesson_progress table first)
+
+---
+
+## PART 3: STREAKS AND STREAK FREEZES (PRO)
+
+### 3.1 Streak Logic
+
+Create /lib/streak.ts:
+
+Server-side only. Called whenever a transaction is logged.
+
+export async function updateStreak(userId: string,
+  supabase: any) {
+
+  const today = new Date().toISOString().split('T')[0]
+
+  const { data: user } = await supabase
+    .from('users')
+    .select('streak, last_log_date, is_pro,
+      streak_freeze_count')
+    .eq('id', userId)
+    .single()
+
+  if (!user) return
+
+  const lastLog = user.last_log_date
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayStr = yesterday.toISOString().split('T')[0]
+
+  let newStreak = user.streak
+  let bonusPoints = 0
+
+  if (lastLog === today) {
+    // Already logged today — no streak change
+    return
+  } else if (lastLog === yesterdayStr) {
+    // Consecutive day — increment streak
+    newStreak = user.streak + 1
+    bonusPoints = 5 // streak continuation bonus
+  } else {
+    // Missed a day — check for streak freeze (Pro only)
+    if (user.is_pro && user.streak_freeze_count > 0) {
+      // Use a freeze
+      const monthYear = today.substring(0, 7)
+      await supabase.from('streak_freezes').insert({
+        user_id: userId,
+        used_at: today,
+        month_year: monthYear
+      })
+      await supabase.from('users')
+        .update({ streak_freeze_count:
+          user.streak_freeze_count - 1 })
+        .eq('id', userId)
+      // Streak preserved — no reset
+      newStreak = user.streak
+    } else {
+      // Reset streak
+      newStreak = 1
+    }
+  }
+
+  // Milestone bonuses (Pro only)
+  if (user.is_pro) {
+    if (newStreak === 7) bonusPoints += 20
+    if (newStreak === 30) bonusPoints += 50
+    if (newStreak === 100) bonusPoints += 200
+  }
+
+  await supabase.from('users').update({
+    streak: newStreak,
+    last_log_date: today,
+    money_score: user.money_score + bonusPoints,
+    total_xp: user.total_xp + bonusPoints
+  }).eq('id', userId)
+
+  if (bonusPoints > 0) {
+    await supabase.from('points_log').insert({
+      user_id: userId,
+      action: 'streak_bonus',
+      points: bonusPoints,
+      metadata: { streak_day: newStreak }
+    })
+  }
+}
+
+### 3.2 Streak Display Component
+
+Create /components/StreakWidget.tsx:
+
+Shows on dashboard for Pro users only.
+Displays:
+- Fire emoji 🔥 with streak number
+- "X day streak" label
+- Row of 7 circles showing last 7 days
+  (green = logged, grey = missed, blue = freeze used)
+- Freeze count: "❄️ 1 freeze available" or
+  "❄️ No freezes left this month"
+- For free users: show a locked version with
+  "🔒 Streak tracking is Pro" and upgrade button
+
+### 3.3 Monthly Freeze Reset
+
+Create a Supabase Edge Function or cron job that runs
+on the 1st of every month and resets streak_freeze_count
+to 1 for all active Pro users:
+
+-- SQL function for monthly reset
+create or replace function reset_monthly_freezes()
+returns void as $$
+  update users
+  set streak_freeze_count = 1
+  where is_pro = true;
+$$ language sql;
+
+Add a comment in the code:
+// TODO: Schedule this function to run on the 1st of
+// every month using Supabase cron (pg_cron extension)
+// or a Vercel cron job
+
+---
+
+## PART 4: FULL LEADERBOARD (PRO)
+
+### 4.1 Leaderboard Page
+
+Update /app/leaderboard/page.tsx (create if doesn't exist):
+
+FREE USERS see:
+- Top 10 users only
+- Rank, name (first name + last initial only), score
+- A blurred/locked section below with:
+  "🔒 See the full leaderboard with Pro"
+- Their own rank shown at bottom:
+  "You are ranked #47 — upgrade to see everyone"
+
+PRO USERS see:
+- Full leaderboard, all users
+- Filter tabs: "This Week" | "This Month" | "All Time"
+- Each row shows:
+  Rank | Name | Money Score | 🔥 Streak | 📚 Lessons
+- Top 3 get gold/silver/bronze medal emojis
+- Current user's row is highlighted in green
+- Their own stats pinned at bottom if not in top 20
+
+### 4.2 Leaderboard is Cheat-Proof
+
+IMPORTANT: Points only come from server-side actions.
+The client NEVER awards its own points.
+Every point is logged in points_log with a timestamp.
+
+Points only come from:
+- Daily first login: +1pt (once per 24hrs, server check)
+- Completing a lesson with min 2/3 quiz score: +10 or +20pt
+- 7-day streak milestone: +20pt (Pro only)
+- 30-day streak milestone: +50pt (Pro only)
+- Completing a savings goal: +25pt
+- Completing onboarding: +5pt (one time)
+
+Money entry logging gives ZERO points.
+This is intentional and must never be changed.
+
+Add bottom nav link to leaderboard.
+Or add it as a tab on the dashboard/home screen.
+
+---
+
+## PART 5: ADVANCED ANALYTICS (PRO)
+
+Create /app/analytics/page.tsx
+Wrap entire page in <ProGate> component.
+
+### 5.1 Charts to Build (use Recharts)
+
+1. INCOME VS EXPENSES — 6-month bar chart
+   Side by side bars per month
+   Green bars = income, Red bars = expenses
+   Data: aggregate transactions by month for last 6 months
+
+2. SPENDING BY CATEGORY — pie chart
+   Current month breakdown by expense category
+   Show % and dollar amount in legend
+
+3. SAVINGS RATE — line chart
+   Monthly savings rate (%) over last 6 months
+   Reference line at 20% ("recommended")
+   Color the line green if above 20%, amber if below
+
+4. INCOME GROWTH — area chart
+   Monthly income over time
+   Shows if side hustle is growing
+
+5. SPENDING TRENDS — stacked bar chart
+   Top 4 spending categories over last 6 months
+   Shows which categories are growing
+
+### 5.2 Stats Cards Row
+
+Show 4 metric cards at top of analytics page:
+- Average monthly income (last 3 months)
+- Average monthly spend (last 3 months)
+- Average savings rate
+- Best month ever (highest surplus month)
+
+### 5.3 Goal Timeline Projector
+
+Below the charts, show each active savings goal with:
+- Goal name and emoji
+- Current amount / target amount
+- Progress bar
+- "At your current savings rate of $X/month, you'll
+  reach this goal in approximately Y months
+  (estimated: [Month Year])"
+- Calculate from: average monthly net savings over
+  last 3 months
+
+### 5.4 Biggest Spending Weeks
+
+Show a 4-week breakdown of current month:
+Week 1: $X spent
+Week 2: $X spent
+Week 3: $X spent (🔴 highest this month)
+Week 4: $X spent
+
+Add analytics link to bottom nav or settings menu.
+
+---
+
+## PART 6: CSV EXPORT (PRO)
+
+Create /lib/exportCSV.ts:
+
+export function exportToCSV(transactions: any[],
+  filename: string) {
+
+  const headers = [
+    'Date', 'Type', 'Category', 'Amount', 'Note'
+  ]
+
+  const rows = transactions.map(t => [
+    new Date(t.date).toLocaleDateString(),
+    t.type,
+    t.category,
+    `$${parseFloat(t.amount).toFixed(2)}`,
+    t.note || ''
+  ])
+
+  const csvContent = [headers, ...rows]
+    .map(row => row.map(cell =>
+      `"${String(cell).replace(/"/g, '""')}"`
+    ).join(','))
+    .join('\n')
+
+  const blob = new Blob([csvContent],
+    { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+Add an "Export CSV" button to:
+1. The Income page (exports income only)
+2. The Expenses page (exports expenses only)
+3. The Settings page (exports all transactions)
+
+Each button should:
+- Check isPro first — if not Pro, show upgrade modal
+- Query all transactions for that user
+- Call exportToCSV with appropriate filename:
+  "finflow-income-june-2025.csv"
+  "finflow-expenses-june-2025.csv"
+  "finflow-all-transactions.csv"
+
+---
+
+## PART 7: COMPLETION CERTIFICATE (PRO)
+
+Create /lib/generateCertificate.ts
+
+When a Pro user completes ALL 43 lessons, generate
+a downloadable PDF certificate.
+
+Use the browser's print/PDF functionality as the
+simplest approach:
+
+export function generateCertificate(userName: string,
+  completionDate: string) {
+
+  const certificateHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: Georgia, serif;
+          background: #0D1117;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 100vh;
+          margin: 0;
+          padding: 40px;
+        }
+        .certificate {
+          border: 3px solid #00C896;
+          border-radius: 16px;
+          padding: 60px;
+          text-align: center;
+          max-width: 700px;
+          width: 100%;
+        }
+        .logo { color: #00C896; font-size: 32px;
+          font-weight: bold; margin-bottom: 8px; }
+        .subtitle { color: #8B949E; margin-bottom: 40px; }
+        .certifies { color: #8B949E; font-size: 18px; }
+        .name { color: #00C896; font-size: 42px;
+          font-weight: bold; margin: 16px 0; }
+        .completed { color: white; font-size: 20px;
+          margin-bottom: 8px; }
+        .course { color: #00C896; font-size: 24px;
+          font-weight: bold; margin-bottom: 40px; }
+        .date { color: #8B949E; font-size: 14px; }
+        .seal { font-size: 60px; margin-bottom: 16px; }
+      </style>
+    </head>
+    <body>
+      <div class="certificate">
+        <div class="seal">🏆</div>
+        <div class="logo">FinFlow</div>
+        <div class="subtitle">
+          The Teen Money App
+        </div>
+        <div class="certifies">
+          This certifies that
+        </div>
+        <div class="name">${userName}</div>
+        <div class="completed">
+          has successfully completed
+        </div>
+        <div class="course">
+          FinFlow Financial Literacy Program
+        </div>
+        <div class="completed">
+          including all 43 lessons across 6 tracks
+          covering Money Basics, Budgeting, Saving,
+          Investing, Earning, and Trading Academy
+        </div>
+        <br/>
+        <div class="date">
+          Completed on ${completionDate}
+        </div>
+      </div>
+    </body>
+    </html>
+  `
+
+  const printWindow = window.open('', '_blank')
+  if (printWindow) {
+    printWindow.document.write(certificateHTML)
+    printWindow.document.close()
+    printWindow.print()
+  }
+}
+
+Add a "Download Certificate" button on the Learn page
+that only appears when:
+1. User is Pro
+2. All 43 lessons are marked complete
+If conditions not met — show progress:
+"Complete all 43 lessons to earn your certificate
+(37/43 done)"
+
+---
+
+## PART 8: FRIEND GOALS AND FRIEND SYSTEM (PRO)
+
+### 8.1 Friend Request Flow
+
+Create /app/friends/page.tsx (Pro gated):
+
+SECTION 1: Add a Friend
+- Input field: "Enter username or email"
+- "Send Request" button
+- On submit: create a friendship row with
+  status='pending'
+- Show success: "Friend request sent to @username"
+
+SECTION 2: Pending Requests
+- List of incoming friend requests
+- Each shows: name, "Accept" and "Decline" buttons
+- Accept: updates friendship status to 'accepted'
+- Decline: updates to 'declined'
+
+SECTION 3: My Friends
+- List of accepted friends
+- Shows: name, their current streak, their money score
+- "Challenge to a goal" button on each friend
+
+### 8.2 Friend Goals Feature
+
+On the Goals page, Pro users see a "Challenge a Friend"
+button on each goal card.
+
+Flow:
+1. User taps "Challenge a Friend" on their goal
+2. Modal appears: select which friend to challenge
+3. Friend receives a notification (in-app banner
+   next time they log in):
+   "@username challenged you to: Save $500 by August"
+4. Friend taps "Accept Challenge"
+5. Friend creates their own matching goal
+6. Both goals are linked in friend_goals table
+
+On the Goals page, linked goals show:
+Your progress:    ████████░░  80%
+Friend's progress: █████░░░░░  50%
+
+Show only percentage bars — not exact amounts.
+Privacy is important.
+
+### 8.3 Friend System Database Queries
+
+Create /lib/friends.ts with these functions:
+
+// Send a friend request
+export async function sendFriendRequest(
+  requesterId: string,
+  receiverIdentifier: string, // username or email
+  supabase: any
+)
+
+// Accept a friend request
+export async function acceptFriendRequest(
+  friendshipId: string,
+  supabase: any
+)
+
+// Get all accepted friends
+export async function getFriends(
+  userId: string,
+  supabase: any
+)
+
+// Create a friend goal challenge
+export async function challengeFriendToGoal(
+  goalId: string,
+  friendId: string,
+  supabase: any
+)
+
+Add "Friends" link to settings page or bottom nav.
+
+---
+
+## PART 9: TAX CALCULATOR (PRO)
+
+Create /app/tax-calculator/page.tsx
+Wrap in <ProGate> component.
+
+### 9.1 The Calculator
+
+A simple interactive form:
+
+Step 1 — Select country:
+Dropdown: United States | United Kingdom | Israel | Other
+
+Step 2 — Select income type:
+- Part-time employment
+- Freelance / self-employed
+- Reselling
+- Content creation
+- Mixed income
+
+Step 3 — Enter annual income:
+Number input with currency symbol matching country
+
+Step 4 — Calculate button
+
+### 9.2 Results Display
+
+For US users:
+
+Show these calculations:
+
+INCOME TAX:
+Standard deduction 2025: $14,600
+Taxable income: max(0, income - 14600)
+If taxable income = 0: "You owe $0 income tax 🎉
+Your earnings are below the standard deduction."
+If taxable income > 0: show tax bracket calculation
+
+SELF-EMPLOYMENT TAX (if freelance/reselling):
+If income > $400: self-employment tax = income × 0.1413
+Show: "You may owe approximately $X in
+self-employment tax"
+
+TOTAL ESTIMATED TAX OWED: sum of above
+
+IMPORTANT DISCLAIMER (show in red):
+"⚠️ This is an estimate only. Tax laws change and vary
+by state. Always consult a tax professional or use
+official IRS resources for accurate filing.
+FinFlow is not a licensed tax advisor."
+
+For UK users:
+
+Personal allowance 2025/26: £12,570
+Basic rate (20%): £12,571 - £50,270
+Show similar calculation with NI contributions note
+
+For Israel:
+Show: "Tax thresholds in Israel vary. As a minor,
+you may be exempt. Consult a licensed accountant
+or use the Israeli Tax Authority website (mof.gov.il)."
+
+For Other:
+Show: "We don't have specific tax data for your country.
+Search '[your country] income tax calculator' for
+accurate local information."
+
+### 9.3 Tips Section
+
+Below results, always show:
+- "Keep records of all freelance income"
+- "If you earn over the self-employment threshold,
+   consider setting aside 15-20% of each payment"
+- "Ask a parent or guardian to help you file if needed"
+
+---
+
+## PART 10: GLOBAL MARKET PAGE (PRO GATE)
+
+The Global Market page already exists at /app/market.
+Apply the Pro gate to it:
+
+1. Import ProGate component
+2. Wrap the entire page content in <ProGate>
+3. The gate shows the standard upgrade screen
+   if user is not Pro
+
+No other changes to the market page.
+
+---
+
+## PART 11: COMPOUND INTEREST CALCULATOR (PRO GATE)
+
+The Compound Interest calculator page already exists.
+Find it (check /app/summary or wherever it lives)
+and wrap its content in <ProGate>.
+
+No other changes to the calculator page.
+
+---
+
+## PART 12: UPGRADE PAGE AND PRO BADGE
+
+### 12.1 Pro Badge in UI
+
+When a user is Pro, show a small crown badge 👑
+next to their name on:
+- Dashboard header
+- Settings page
+- Leaderboard rows
+
+### 12.2 Pro Expiry Handling
+
+If a Pro subscription expires (expires_at < now):
+1. Automatically set is_pro = false on the users table
+2. Show a banner on dashboard:
+   "Your Pro subscription expired. Renew to keep
+   your streak freeze and full leaderboard access."
+3. Streak freezes stop working immediately
+4. Leaderboard reverts to top 10 view
+5. Analytics, Tax Calculator, Market, Compound
+   Interest Calculator show upgrade screen
+6. Existing lesson progress and XP is kept —
+   they never lose what they earned
+
+### 12.3 Manual Pro Activation (for testing)
+
+Until Stripe is connected, add a hidden admin function.
+Create /app/admin/activate-pro/page.tsx:
+
+A simple password-protected page (hardcoded password
+in env: ADMIN_PASSWORD) that lets you manually set
+any user as Pro by entering their email. For testing
+only. Add comment: // TODO: Remove before public launch
+
+---
+
+## PART 13: BOTTOM NAVIGATION UPDATES
+
+Update /components/BottomNav.tsx to include:
+
+Free users see: Home | Income | Spend | Goals | Learn
+Pro users see: Home | Income | Goals | Learn | More
+"More" tab opens a menu with:
+- Analytics
+- Leaderboard
+- Friends
+- Tax Calculator
+- Settings
+
+Or alternatively: add a dedicated tab for the feature
+used most (Analytics) and put others in Settings.
+Use whichever approach fits the existing nav design.
+
+---
+
+## ENVIRONMENT VARIABLES NEEDED
+
+Add to .env.local and .env.example:
+
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+STRIPE_SECRET_KEY=sk_test_... (add when ready)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+ADMIN_PASSWORD=your_admin_password_for_testing
+
+---
+
+## WHAT NOT TO CHANGE
+
+- Do not change the color scheme (#0D1117 background,
+  #00C896 green accent)
+- Do not change existing page layouts or designs
+- Do not change the database schema except adding
+  the new tables listed in Part 1
+- Do not change the auth flow
+- Do not remove any existing features
+- Do not change the landing page
+
+---
+
+## DELIVERABLES CHECKLIST
+
+Produce all of the following — tick each off as done:
+
+[ ] All 5 new database tables created (SQL provided)
+[ ] useProStatus hook
+[ ] ProGate component
+[ ] /app/upgrade/page.tsx — full upgrade page
+[ ] /lib/lessons.ts — all 43 lessons with full content
+    and quiz questions (do not shorten or summarise)
+[ ] /app/learn/page.tsx — updated with tracks,
+    locks, and Pro badges
+[ ] /app/learn/[id]/page.tsx — updated with Pro check
+    and correct XP awards
+[ ] /lib/streak.ts — full streak and freeze logic
+[ ] /components/StreakWidget.tsx
+[ ] /app/leaderboard/page.tsx — free and Pro views
+[ ] /app/analytics/page.tsx — all 5 charts and
+    goal projector
+[ ] /lib/exportCSV.ts + export buttons on 3 pages
+[ ] /lib/generateCertificate.ts + certificate button
+[ ] /app/friends/page.tsx — friend system
+[ ] /lib/friends.ts — friend helper functions
+[ ] /app/tax-calculator/page.tsx — full calculator
+[ ] Global Market page wrapped in ProGate
+[ ] Compound Interest page wrapped in ProGate
+[ ] Pro crown badge on dashboard and settings
+[ ] Pro expiry handling logic
+[ ] /app/admin/activate-pro/page.tsx (testing only)
+[ ] Updated BottomNav with Pro features
+[ ] Updated .env.example
+[ ] List of every file created or modified
+
+---
+
+## FINAL INSTRUCTIONS
+
+Do not stop mid-implementation. Complete every item
+on the deliverables checklist. If a file is 300 lines,
+write all 300 lines. If a lesson has 300 words of
+content, include all 300 words. Do not use placeholder
+comments like "add lesson content here" — write the
+actual content.
+
+When done, output a complete list of every file
+you created or modified so I can verify nothing
+was missed.
+
+use the file C:\Users\knaan\.gemini\FinFlow-Finance tracker for teens-2.0\FinFlow_Full_Curriculum_1.md for the subscription additional lessons. also make sure compound intrest calculators and market page is becoming a pro pages.

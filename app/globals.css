@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Glassmorphism utilities */
+  .glass {
+    @apply bg-surface/60 backdrop-blur-xl border border-white/5 shadow-glass;
+  }
+  
+  .glass-card {
+    @apply glass rounded-3xl overflow-hidden relative transition-all duration-300;
+  }
+}
+
+body {
+  background-color: theme('colors.background');
+  color: theme('colors.textMain');
+  
+  /* Refined dark space background matched to 2026 aesthetics */
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(179, 136, 255, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(0, 230, 118, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 50% -20%, #1A1A2A 0%, transparent 80%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hide scrollbar entirely for clean bento feel */
+::-webkit-scrollbar {
+  display: none;
+}
